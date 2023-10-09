@@ -3,6 +3,7 @@
 #include<unistd.h>
 #include<semaphore.h>
 #include<sys/ipc.h>
+#include<stdint.h>
 
 #define BUFFER_SIZE 10
 
@@ -40,23 +41,25 @@ int delete(){
 
 void* producer(void* args){
     int item = 0;
-    while (1)
+    while (item < (int)(size_t)args)
     {
         item++;
         printf("Produced : %d\n",item);
         insert(item);
         sleep(wait_time);
     }
-    return NULL;
+    pthread_exit(NULL);
 }
 void* consumer(void* args){
-    while (1)
+    int i = 0;
+    while (i < (int)(size_t)args)
     {
         int item = delete();
         printf("Consumed : %d\n",item);
         sleep(wait_time);
+        i++;
     }
-    return NULL;
+    pthread_exit(NULL);
 }
 
 int main(){
@@ -65,8 +68,12 @@ int main(){
     pthread_mutex_init(&mutex,NULL);
     pthread_t producer_thread, consumer_thread;
 
-    pthread_create(&producer_thread,NULL,producer,NULL);
-    pthread_create(&consumer_thread,NULL,producer,NULL);
+    int n;
+    printf("Enter the number of items : ");
+    scanf("%d",&n);
+
+    pthread_create(&producer_thread,NULL,producer,(void *)(size_t)n);
+    pthread_create(&consumer_thread,NULL,consumer,(void *)(size_t)n);
 
     pthread_join(producer_thread,NULL);
     pthread_join(consumer_thread,NULL);
